@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choose Us</title>
+<meta name="description" content="A private, guided way for couples to start the marriage conversation.">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef0fb;--ink:#1b1d3a;--mute:#5d6086;--acc:#c2185b;--card:#fff;--line:#cfd3ee}
+@media(prefers-color-scheme:dark){:root{--bg:#12132a;--ink:#ecebfa;--mute:#a4a7cf;--acc:#ff7aa8;--card:#1c1e3d;--line:#33365e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 'DM Sans',system-ui,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:28px 22px 80px}
+.brand{font:800 18px 'Bricolage Grotesque',Georgia,serif;margin:0 0 44px}
+h1,h2,h3{font-family:'Bricolage Grotesque',Georgia,serif;line-height:1.05;letter-spacing:-.02em;margin:0 0 18px}
+h1{font-size:clamp(44px,12vw,76px);font-weight:800}
+h1 span{display:block}h1 span+span{margin-left:clamp(24px,14vw,110px);color:var(--acc)}
+h2{font-size:clamp(28px,6vw,38px);font-weight:800}h3{font-size:20px;margin:26px 0 8px}
+.lead{font-size:19px;color:var(--mute);max-width:52ch}.fine{font-size:14px;color:var(--mute)}
+.btn,.opt{font:500 17px 'DM Sans',sans-serif;cursor:pointer;border-radius:999px;padding:13px 24px;border:2px solid var(--acc)}
+.btn{background:var(--acc);color:#fff;margin:6px 8px 6px 0}.btn.ghost{background:none;color:var(--acc)}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border-color:var(--line);border-radius:14px;margin:10px 0}
+.opt:hover{border-color:var(--acc)}
+.btn:focus-visible,.opt:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+input{width:100%;font:inherit;padding:13px 16px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);margin:8px 0 18px}
+.steps{padding-left:22px;margin:44px 0 24px;color:var(--mute)}.steps li{margin-bottom:12px}.steps b{display:block;color:var(--ink)}
+ul.rm{list-style:none;padding:0}ul.rm li{padding:10px 0;border-bottom:1px solid var(--line)}
+a{color:var(--acc)}
+</style></head>
+<body><main id="app"></main>
+<script>
+const $=s=>document.querySelector(s),app=$('#app');
+const S=()=>JSON.parse(localStorage.getItem('cu')||'null'),setS=v=>localStorage.setItem('cu',JSON.stringify(v));
+const api=async(p,b)=>(await fetch('/api/'+p,b?{method:'POST',body:JSON.stringify(b)}:{})).json();
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let timer,ans=[],tp=[],lastKey='';
+const shell=h=>{clearInterval(timer);app.innerHTML=`<div class="wrap"><p class="brand">Choose Us</p>${h}</div>`};
+
+const Q=[
+['How do you feel when you imagine marrying your partner?',['Excited','Happy but nervous','Unsure','Not ready',"I haven't really thought about it"]],
+['Do you feel comfortable discussing marriage with your partner?',['Yes','Mostly','Not yet']],
+['Do you want marriage with this person someday?',['Yes','I think so',"I'm unsure",'No']],
+['Are there important things you still need to discuss before marriage?',['Yes','No',"I'm not sure"]],
+['How ready are you to have an honest conversation about marriage?',['1','2','3','4','5']]];
+const T=[
+['What marriage means to us',['What does being married mean to you?','Why do you want marriage?','What would change after marriage, and what wouldn’t?']],
+['Timing',['Do we want to get married, and roughly when?','Is there anything we want to accomplish first?','Are we comfortable with different timelines?']],
+['Money',['How do we want to manage finances, and would we combine them?','What are our financial goals, and do we have debt?','What does financial security mean to each of us?']],
+['Children',['Do we want children, how many, and when?','What happens if our plans change?','How do we imagine parenting?']],
+['Family',['How involved should our families be?','What traditions matter to us?','How would we handle difficult family situations?']],
+['Lifestyle',['Where do we want to live?','How important are travel and career?','How do we want to spend our free time?']],
+['Values',['Which values matter most to us?','What does commitment mean to each of us?','How do we handle disagreements?']]];
+
+function home(){const s=S();shell(`<h1><span>Choose each other.</span><span>Don’t wait to be chosen.</span></h1>
+<p class="lead">You don’t have to wait for a proposal to talk about your future. Choose Us gives couples a private, guided way to start the marriage conversation.</p>
+<button class="btn" onclick="start()">Start the Conversation</button>
+${s?'<p><a href="#" onclick="resume();return false">Resume your conversation</a></p>':''}
+<ol class="steps"><li><b>Start privately</b>One partner creates a private invitation.</li><li><b>Answer honestly</b>Each of you answers readiness questions independently. Your partner never sees your answers.</li><li><b>Choose together</b>If you’re both ready, you unlock a guided conversation about your future.</li></ol>
+<p class="fine">Choose Us doesn’t tell couples whether to marry. It helps them decide together.</p>`)}
+
+function start(){shell(`<h2>Are you ready to talk about marriage?</h2>
+<p class="lead">You don’t have to know when, how, or whether yet. This is a private way to tell your partner: “I’m ready to have the conversation.”</p>
+<label>Your name<input id="n" maxlength="40" autocomplete="given-name"></label>
+<button class="btn" onclick="create()">Create My Invitation</button>`)}
+async function create(){setS(await api('create',{name:$('#n').value}));invite()}
+
+const link=()=>location.origin+'/invite/'+S().code;
+function invite(){const l=link();shell(`<h2>Your invitation is ready.</h2>
+<p class="lead">Send this to your partner. It says “I want to talk about our future,” not “Will you marry me?”</p>
+<input readonly value="${l}" aria-label="Invitation link">
+<button class="btn" onclick="navigator.clipboard.writeText('${l}');this.textContent='Copied'">Copy Invitation Link</button>
+<button class="btn ghost" onclick="navigator.share&&navigator.share({title:'Choose Us',text:'I want to talk about our future.',url:'${l}'})">Share Invitation</button>
+<p style="margin-top:32px">While you wait, answer your own questions privately.</p>
+<button class="btn" onclick="ask()">Answer My Questions</button>`)}
+
+function partner(c){shell(`<h2>Someone you love wants to start a conversation about your future.</h2>
+<p class="lead">This isn’t a proposal. You aren’t being asked to decide anything right now, only to think honestly about whether you’re ready to talk about marriage.</p>
+<button class="btn" onclick="join('${c}')">I’m Ready to Explore This</button>
+<button class="btn ghost" onclick="decline('${c}')">I’m Not Ready Yet</button>`)}
+async function join(c){const r=await api('join',{code:c});if(r.error)return shell(`<h2>${esc(r.error)}</h2><p class="lead">Ask your partner to send a new invitation.</p>`);setS(r);ask()}
+async function decline(c){await api('decline',{code:c});shell('<h2>Thank you.</h2><p class="lead">There’s no pressure. You can close this page.</p>')}
+
+function ask(){ans=[];q(0)}
+function q(i){if(i>4)return save({ans});const[t,o]=Q[i];
+shell(`<p class="fine">Question ${i+1} of 5. Private: your partner never sees your answers.</p><h2>${t}</h2>
+${o.map((v,k)=>`<button class="opt" onclick="pick(${i},${k})">${esc(v)}</button>`).join('')}
+${i==4?'<p class="fine">1 means not ready. 5 means completely ready.</p>':''}`)}
+function pick(i,k){ans[i]=Q[i][1][k];q(i+1)}
+
+async function save(b){const s=S();show(await api('save',{...b,code:s.code,token:s.token}))}
+const poll=()=>{const s=S();api(`state?code=${s.code}&token=${s.token}`).then(r=>show(r,1))};
+function resume(){const s=S();api(`state?code=${s.code}&token=${s.token}`).then(r=>{if(r.error){localStorage.removeItem('cu');home()}else show(r)})}
+
+function show(r,polling){
+if(r.error)return shell(`<h2>${esc(r.error)}</h2>`);
+const key=r.stage+(r.me.topics?1:0)+(r.roadmap?1:0);if(polling&&key===lastKey)return;lastKey=key;
+if(r.stage==='questions')return ask();
+if(r.stage==='declined')return shell('<h2>Your partner isn’t ready to explore this right now.</h2><p class="lead">That’s okay. Timing matters, and this can wait.</p>');
+if(r.stage==='notboth')return shell('<h2>Not both of you are ready yet.</h2><p class="lead">That’s okay. You don’t need to rush. Come back whenever the timing feels right.</p>');
+if(r.stage==='waiting'){shell(`<h2>Your answers are saved.</h2><p class="lead">We’ll unlock the next step once your partner has answered too. This page checks automatically.</p>${r.role==='a'?`<p class="fine">Invitation link: ${link()}</p>`:''}`);timer=setInterval(poll,5000);return}
+if(r.roadmap)return roadmap(r.roadmap);
+if(r.me.topics){shell('<h2>Your answers are saved.</h2><p class="lead">Waiting for your partner to finish the topics. This page checks automatically.</p>');timer=setInterval(poll,5000);return}
+shell(`<h2>You’re both ready to talk.</h2><p class="lead">You don’t have to decide everything today. You simply agreed that your future is worth talking about.</p><button class="btn" onclick="tp=[];topic(0)">Begin Our Conversation</button>`)}
+
+function topic(i){if(i>6)return save({topics:tp});const[t,p]=T[i];
+shell(`<p class="fine">Topic ${i+1} of 7. Talk these through together.</p><h2>${t}</h2><ul>${p.map(x=>`<li>${x}</li>`).join('')}</ul>
+<p>How settled is this for you? <span class="fine">(Private)</span></p>
+${[['Settled','Settled for me'],['Open','Open to talking'],['Unsure','Not sure yet']].map(([v,l])=>`<button class="opt" onclick="tp[${i}]='${v}';topic(${i+1})">${l}</button>`).join('')}`)}
+
+function roadmap(r){const g={aligned:[],discuss:[],important:[]};r.forEach((x,i)=>g[x].push(T[i][0]));
+shell(`<h2>Our roadmap</h2><p class="lead">Here are the things you seem aligned on, and the things worth talking about further.</p>
+${[['aligned','Strong alignment','❤️'],['discuss','Worth discussing','💬'],['important','Important conversation','💬']].map(([k,l,e])=>g[k].length?`<h3>${l}</h3><ul class="rm">${g[k].map(x=>`<li>${e} ${x}</li>`).join('')}</ul>`:'').join('')}
+<p class="fine">This isn’t a compatibility score. It’s a starting point for your conversation.</p>`)}
+
+const m=location.pathname.match(/^\/invite\/([A-Za-z0-9]{4,12})$/),s0=S();
+if(m){const c=m[1].toUpperCase();s0&&s0.code===c?resume():partner(c)}else home();
+</script></body></html>
